@@ -33,7 +33,7 @@ namespace WebCrawler
 
 
             ICrawler crawler = serviceProvider.GetRequiredService<ICrawler>();
-            await crawler.RunCrawlAsync();
+            await crawler.RunCrawlAsync("http://wiprodigital.com", "output.json");
 
 
 

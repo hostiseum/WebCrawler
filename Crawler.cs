@@ -3,10 +3,14 @@ using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.Serialization;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace WebCrawler
 {
@@ -29,69 +33,100 @@ namespace WebCrawler
             get { return "myBot1.0"; }
         }
 
-        public async Task RunCrawlAsync(string rootUrl = "http://wiprodigital.com")
+        public async Task RunCrawlAsync(string rootUrl, string outputFilePath)
         {
-            
-            if (string.IsNullOrEmpty(rootUrl) 
-                || _memoryCacheService.Get(rootUrl) != null 
+            Log.Logger.Information($"Starting to crawl {rootUrl}");
+
+            await RunCrawlAsync(rootUrl);
+
+            Log.Logger.Information($"Finished crawling {rootUrl}");
+            Log.Logger.Information($"Writing data to the file: {outputFilePath}");
+
+            await WriteCacheToDisk(outputFilePath).ContinueWith((r) =>
+            {
+                if (r.Exception != null)
+                {
+                    Log.Logger.Error($"Error writing data to the file: {outputFilePath}");
+                }
+                else
+                {
+                    Log.Logger.Information($"Finished writing data to the file: {outputFilePath}");
+                }
+            });
+            return;
+        }
+        private async Task RunCrawlAsync(string rootUrl)
+        {
+
+            if (string.IsNullOrEmpty(rootUrl)
+                || _memoryCacheService.Contains(rootUrl)
                 || new Uri(_domainUrl).Host != new Uri(rootUrl).Host)
                 return;
 
-            Log.Logger.Information($"Crawling url : {rootUrl}");
+            var crawledSite = await CrawlUrl(rootUrl);
 
-            // HttpClient.
-            var urls = await GetUrls(rootUrl);
-
-            if (urls == null)
+            if (crawledSite == null)
             {
                 return;
             }
 
-            var list = _urlUtilities.CleanUp(_domainUrl, rootUrl, urls);
+            var updatedUrls = _urlUtilities.CleanUp(_domainUrl, rootUrl, crawledSite.htmlTags);
 
-            Parallel.ForEach(list, l =>
+            crawledSite.htmlTags = updatedUrls;
+
+            _memoryCacheService.Set(rootUrl, crawledSite);
+
+            Parallel.ForEach(updatedUrls, l =>
             {
-
                 var t = RunCrawlAsync(l).GetAwaiter();
                 t.GetResult();
             });
 
         }
 
-        public async Task<IEnumerable<string>> GetUrls(string url)
+        private async Task<CrawledSite> CrawlUrl(string url)
         {
-
-            _memoryCacheService.Set(url, new CrawledSite { Url = url });
             using HttpClient httpClient = new HttpClient();
-            
+
             if (!string.IsNullOrEmpty(UserAgent))
             {
                 httpClient.DefaultRequestHeaders.Add("User-Agent", UserAgent);
             }
 
-            HtmlDocument htmlDocument = new HtmlDocument();
-           
-           return await httpClient.GetStringAsync(url)
-            .ContinueWith((r) => { 
-                if (r.Exception != null)
-                {
-                    _memoryCacheService.Set(url, 
-                                            new CrawledSite { Url = url, 
-                                            Crawled = false, 
-                                            ErrorIfNotCrawled = r.Exception.Message });
-                    return null;
-                }
-                
-                if (r.IsCompletedSuccessfully)
-                {
-                    _memoryCacheService.Set(url, new CrawledSite { Url = url, Crawled = true });
-                    
-                    htmlDocument.LoadHtml(r.Result);
-                    var anchorTags = htmlDocument.DocumentNode.Descendants("a");
-                    return anchorTags.Select(a => a.Attributes.Where(x => x.Name == "href").FirstOrDefault()?.Value);
-                }
-                return null;
-            });
+            return await httpClient.GetStringAsync(url)
+             .ContinueWith((r) =>
+             {
+                 if (r.Exception != null)
+                 {
+                     _memoryCacheService.Set(url,
+                                             new CrawledSite
+                                             {
+                                                 Url = url,
+                                                 Crawled = false,
+                                                 ErrorIfNotCrawled = r.Exception.Message
+                                             });
+                     return null;
+                 }
+
+                 if (r.IsCompletedSuccessfully)
+                 {
+                     var htmlContent = r.Result;
+                     var hreftags = _urlUtilities.GetValues(htmlContent, "a", "href");
+                     var imagetags = _urlUtilities.GetValues(htmlContent, "img", "src");
+                     var crawledSite = new CrawledSite { Url = url, Crawled = true, htmlTags = hreftags, imageTags = imagetags };
+
+                     return crawledSite;
+
+                 }
+                 return null;
+             });
+        }
+
+        private async Task WriteCacheToDisk(string outputFilePath)
+        {
+            var memCache = _memoryCacheService.GetCurrentCache();
+            using FileStream createStream = File.Create(outputFilePath);
+            await JsonSerializer.SerializeAsync(createStream, memCache);
         }
     }
 }

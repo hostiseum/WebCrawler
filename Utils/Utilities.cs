@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HtmlAgilityPack;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -36,6 +37,14 @@ namespace WebCrawler
                                  && new Uri(h).Host == new Uri(domainUrl).Host);
 
             return hrefsList.Distinct();
+        }
+
+        public IEnumerable<string> GetValues(string htmlContent, string rootTag, string attribute)
+        {
+            HtmlDocument htmlDocument = new HtmlDocument();
+            htmlDocument.LoadHtml(htmlContent);
+            var anchorTags = htmlDocument.DocumentNode.Descendants(rootTag);
+            return anchorTags.Select(a => a.Attributes.Where(x => x.Name == attribute).FirstOrDefault()?.Value);
         }
     }
 }

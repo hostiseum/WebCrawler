@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,28 +13,34 @@ namespace WebCrawler
     public class MemoryCacheService : IMemoryCacheService
     {
         //MemCache is ThreadSafe
-        private MemoryCache cache;
-        private const string keyFormat = "Key_{0}";
+        private ConcurrentDictionary<string, CrawledSite> cache;
+        //private const string keyFormat = "Key_{0}";
 
         public MemoryCacheService() {
 
-            cache = new MemoryCache(new MemoryCacheOptions());
+            cache = new ConcurrentDictionary<string, CrawledSite>();
         
         }
-        public MemoryCache GetCurrentCache()
+        public ConcurrentDictionary<string, CrawledSite> GetCurrentCache()
         {
             return cache;
         }
 
         public CrawledSite Get(string key)
         {
-            return (CrawledSite)cache.Get(string.Format(keyFormat, key));
+            return cache.ContainsKey(key) ? cache[key] : null;
+        }
+
+        public bool Contains(string key)
+        {
+            return cache.ContainsKey(key);
         }
 
         public void Set(string key, CrawledSite site)
         {
-            cache.Set(string.Format(keyFormat, key), site, 
-                new MemoryCacheEntryOptions().SetPriority(CacheItemPriority.NeverRemove));
+            cache[key] = site;
         }
+
+
     }
 }

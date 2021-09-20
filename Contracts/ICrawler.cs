@@ -4,6 +4,6 @@ namespace WebCrawler
 {
     public interface ICrawler
     {
-        public  Task RunCrawlAsync(string rootUrl = "http://wiprodigital.com");
+        Task RunCrawlAsync(string rootUrl, string outputFilePath);
     }
 }
