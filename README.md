@@ -12,3 +12,6 @@ Upon running the application, It will prompts to enter the website URL. I have u
 Once the application finished crawling, It will create output.json in the same folder from where the application run.
 
 ## Improvements
+1. MemCache service should be replaced with more scalable service
+2. CrawledSite object does not populate names currently like wise any information that we are interested in can be captured
+3. Better algorithm like Bloom filter should be used for to check if the site is already crawled.
