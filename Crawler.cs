@@ -40,8 +40,6 @@ namespace WebCrawler
             if (string.IsNullOrEmpty(rootUrl))
                 throw new ApplicationException($"Invalid Url {rootUrl}");
 
-
-
             Log.Logger.Information($"Starting to crawl {rootUrl}");
 
             await RunCrawlAsync(rootUrl);
