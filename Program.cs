@@ -16,7 +16,14 @@ namespace WebCrawler
               .WriteTo.File(new CompactJsonFormatter(), "./logs/myapp.json")
               .CreateLogger();
 
-            args = new string[] { "http://wiprodigital.com" };
+            Console.WriteLine("Enter URL to crawl:");
+            var url = Console.ReadLine();
+
+            if (string.IsNullOrEmpty(url))
+            {
+                Console.WriteLine("Invalid Url");
+                return;
+            }
 
 
             var serviceProvider = new ServiceCollection()
@@ -24,7 +31,7 @@ namespace WebCrawler
           //.AddSingleton<IConfigurationService, ConfigurationService>()
           .AddSingleton<IMemoryCacheService, MemoryCacheService>()
 
-          .AddTransient<string>(_ => args[0])
+          .AddTransient<string>(_ => url)
           .AddTransient<ICrawler, Crawler>()
           .AddTransient<IUrlUtilities, UrlUtilities>()
           //.AddTransient<IAdvertisementService, AdvertisementService>()
@@ -33,9 +40,7 @@ namespace WebCrawler
 
 
             ICrawler crawler = serviceProvider.GetRequiredService<ICrawler>();
-            await crawler.RunCrawlAsync("http://wiprodigital.com", "output.json");
-
-
+            await crawler.RunCrawlAsync(url, "output.json");
 
             Console.WriteLine("Press any key to continue...");
         }
