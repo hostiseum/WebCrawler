@@ -14,5 +14,5 @@ Once the application finished crawling, It will create output.json in the same f
 ## Improvements
 1. MemCache service should be replaced with more scalable service like Azure Redis
 2. CrawledSite object does not populate names currently like wise any information that we are interested in can be captured
-3. Better algorithm like Bloom filter should be used for to check if the site is already crawled.
+3. Better algorithm like Bloom filter should be used to check if the site is already crawled.
 4. Result dump can be improved.
