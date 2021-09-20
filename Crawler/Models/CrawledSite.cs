@@ -12,8 +12,8 @@ namespace WebCrawler
         public string Name { get; set; }
         public bool Crawled { get; set; }
         public string ErrorIfNotCrawled { get; set; }
-        public IEnumerable<string> htmlTags { get; set; }
-        public IEnumerable<string> imageTags { get; set; }
+        public IEnumerable<string> hrefLinks { get; set; }
+        public IEnumerable<string> imageUrls { get; set; }
     }
 
     public class CrawledLink

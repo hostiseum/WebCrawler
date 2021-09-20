@@ -35,7 +35,6 @@ namespace WebCrawler
 
         public async Task RunCrawlAsync(string rootUrl, string outputFilePath)
         {
-
             //Validate Url
             if (string.IsNullOrEmpty(rootUrl))
                 throw new ApplicationException($"Invalid Url {rootUrl}");
@@ -75,18 +74,17 @@ namespace WebCrawler
                 return;
             }
 
-            var updatedUrls = _urlUtilities.CleanUp(_domainUrl, rootUrl, crawledSite.htmlTags);
+            var updatedUrls = _urlUtilities.UpdateUrls(_domainUrl, rootUrl, crawledSite.hrefLinks);
 
-            crawledSite.htmlTags = updatedUrls;
-
+            crawledSite.hrefLinks = updatedUrls;
             _memoryCacheService.Set(rootUrl, crawledSite);
 
+            //Crawl the urls found on each page as fast as possible
             Parallel.ForEach(updatedUrls, l =>
             {
                 var t = RunCrawlAsync(l).GetAwaiter();
                 t.GetResult();
             });
-
         }
 
         private async Task<CrawledSite> CrawlUrl(string url)
@@ -116,9 +114,9 @@ namespace WebCrawler
                  if (r.IsCompletedSuccessfully)
                  {
                      var htmlContent = r.Result;
-                     var hreftags = _urlUtilities.GetValues(htmlContent, "a", "href");
-                     var imagetags = _urlUtilities.GetValues(htmlContent, "img", "src");
-                     var crawledSite = new CrawledSite { Url = url, Crawled = true, htmlTags = hreftags, imageTags = imagetags };
+                     var hreftags = _urlUtilities.GetHtmlTagValues(htmlContent, "a", "href");
+                     var imagetags = _urlUtilities.GetHtmlTagValues(htmlContent, "img", "src");
+                     var crawledSite = new CrawledSite { Url = url, Crawled = true, hrefLinks = hreftags, imageUrls = imagetags };
 
                      return crawledSite;
 

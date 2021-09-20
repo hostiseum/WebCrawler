@@ -9,7 +9,7 @@ namespace WebCrawler
 {
     public class UrlUtilities : IUrlUtilities
     {
-        public IEnumerable<string> CleanUp(string domainUrl, string rootUrl, IEnumerable<string> hrefs)
+        public IEnumerable<string> UpdateUrls(string domainUrl, string rootUrl, IEnumerable<string> hrefs)
         {
             Uri u = new Uri(rootUrl);
             
@@ -39,7 +39,7 @@ namespace WebCrawler
             return hrefsList.Distinct();
         }
 
-        public IEnumerable<string> GetValues(string htmlContent, string rootTag, string attribute)
+        public IEnumerable<string> GetHtmlTagValues(string htmlContent, string rootTag, string attribute)
         {
             HtmlDocument htmlDocument = new HtmlDocument();
             htmlDocument.LoadHtml(htmlContent);
