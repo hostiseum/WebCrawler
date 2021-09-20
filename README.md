@@ -11,6 +11,9 @@ Upon running the application, It will prompts to enter the website URL. I have u
 ## Output
 Once the application finished crawling, It will create output.json in the same folder from where the application run.
 
+![image](https://user-images.githubusercontent.com/17678287/134076517-7f2019d9-6a28-46c7-b1ab-729462bb5b45.png)
+
+
 ## Improvements
 1. MemCache service should be replaced with more scalable service like Azure Redis
 2. CrawledSite object does not populate names currently like wise any information that we are interested in can be captured
